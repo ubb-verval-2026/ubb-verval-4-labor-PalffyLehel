@@ -175,7 +175,28 @@ public class PersonPageTests
         topError.Displayed.Should().BeFalse();
     }
 
+    [Test]
+    public void BlazDemo_GetFlightPathsBetweenMexicoCityAndDublin_ShouldBeAtLeastThree()
+    {
+        // Arrange
+        driver.Navigate().GoToUrl("https://blazedemo.com/");
+        
+        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
 
+        var fromPort = wait.Until(ExpectedConditions.ElementExists(By.Name("fromPort")));
+        var toPort = wait.Until(ExpectedConditions.ElementExists(By.Name("toPort")));
+
+        fromPort.SendKeys("Mexico City");
+        toPort.SendKeys("Dublin");
+
+        // Act
+        var submitButton = wait.Until(ExpectedConditions.ElementExists(By.ClassName("btn-primary")));
+        submitButton.Click();
+
+        // Assert
+        var list = wait.Until(driver => driver.FindElements(By.XPath("//table//tr")));
+        list.Should().HaveCountGreaterThanOrEqualTo(3);
+    }
 
     private bool IsElementPresent(By by)
     {
