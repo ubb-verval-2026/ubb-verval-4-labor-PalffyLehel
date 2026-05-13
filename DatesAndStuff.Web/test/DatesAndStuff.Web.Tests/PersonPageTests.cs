@@ -98,7 +98,11 @@ public class PersonPageTests
     }
 
     [Test]
-    public void Person_SalaryIncrease_ShouldIncrease()
+    [TestCase(5, 5250)]
+    [TestCase(10, 5500)]
+    [TestCase(-5, 4750)]
+    [TestCase(3, 5150)]
+    public void Person_SalaryIncrease_ShouldIncrease(double percentage, double expectedSalary)
     {
         // Arrange
         driver.Navigate().GoToUrl(BaseURL);
@@ -108,7 +112,7 @@ public class PersonPageTests
 
         var input = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='SalaryIncreasePercentageInput']")));
         input.Clear();
-        input.SendKeys("5");
+        input.SendKeys(percentage.ToString());
 
         // Act
         var submitButton = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='SalaryIncreaseSubmitButton']")));
@@ -118,8 +122,82 @@ public class PersonPageTests
         // Assert
         var salaryLabel = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='DisplayedSalary']")));
         var salaryAfterSubmission = double.Parse(salaryLabel.Text);
-        salaryAfterSubmission.Should().BeApproximately(5250, 0.001);
+        salaryAfterSubmission.Should().BeApproximately(expectedSalary, 0.001);
     }
+
+    [Test]
+    [TestCase(-15)]
+    [TestCase(-11)]
+    [TestCase(-50)]
+    public void Person_SalaryIncrease_ShouldThrowError(double percentage)
+    {
+        // Arrange
+        driver.Navigate().GoToUrl(BaseURL);
+        driver.FindElement(By.XPath("//*[@data-test='PersonPageNavigation']")).Click();
+
+        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
+
+        var input = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='SalaryIncreasePercentageInput']")));
+        input.Clear();
+        input.SendKeys(percentage.ToString());
+
+        // Act
+        var submitButton = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='SalaryIncreaseSubmitButton']")));
+        submitButton.Click();
+
+        // Assert
+        var topError = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='ValidationSummary']")));
+        topError.Displayed.Should().BeTrue();
+        var bottomError = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='ValidationMessage']")));
+        bottomError.Displayed.Should().BeTrue();
+    }
+
+
+    [Test]
+    public void Person_SalaryIncrease_ShouldNotThrowErrorOnExactlyMinusTen()
+    {
+        // Arrange
+        driver.Navigate().GoToUrl(BaseURL);
+        driver.FindElement(By.XPath("//*[@data-test='PersonPageNavigation']")).Click();
+
+        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
+
+        var input = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='SalaryIncreasePercentageInput']")));
+        input.Clear();
+        input.SendKeys("-10");
+
+        // Act
+        var submitButton = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='SalaryIncreaseSubmitButton']")));
+        submitButton.Click();
+
+        // Assert
+        var topError = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='ValidationSummary']")));
+        topError.Displayed.Should().BeFalse();
+    }
+
+    [Test]
+    public void BlazDemo_GetFlightPathsBetweenMexicoCityAndDublin_ShouldBeAtLeastThree()
+    {
+        // Arrange
+        driver.Navigate().GoToUrl("https://blazedemo.com/");
+        
+        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
+
+        var fromPort = wait.Until(ExpectedConditions.ElementExists(By.Name("fromPort")));
+        var toPort = wait.Until(ExpectedConditions.ElementExists(By.Name("toPort")));
+
+        fromPort.SendKeys("Mexico City");
+        toPort.SendKeys("Dublin");
+
+        // Act
+        var submitButton = wait.Until(ExpectedConditions.ElementExists(By.ClassName("btn-primary")));
+        submitButton.Click();
+
+        // Assert
+        var list = wait.Until(driver => driver.FindElements(By.XPath("//table//tr")));
+        list.Should().HaveCountGreaterThanOrEqualTo(3);
+    }
+
     private bool IsElementPresent(By by)
     {
         try
